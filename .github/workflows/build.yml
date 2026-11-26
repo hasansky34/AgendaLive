@@ -1,1 +1,28 @@
+name: Build IPA
 
+on:
+  push:
+    paths: ['AgendaLive.zip', '.github/workflows/build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: unzip -q AgendaLive.zip -d src
+
+      - name: Build AgendaLive.ipa
+        run: bash src/AgendaLive/make_ipa.sh
+
+      - name: Publish download link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest src/AgendaLive/AgendaLive.ipa --title AgendaLive --notes "Unsigned build for appdb"
